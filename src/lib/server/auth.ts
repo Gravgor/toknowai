@@ -1,3 +1,4 @@
+import { authenticateUser } from "@/actions/userActions";
 import {
     getServerSession,
     type NextAuthOptions,
@@ -9,16 +10,27 @@ import {
       strategy: "jwt", //(1)
     },
     callbacks: {
-      async jwt({ token, account, profile }) { 
-        if(account && account.type === "credentials") { //(2)
-          token.userId = account.providerAccountId; // this is Id that coming from authorize() callback 
-        }
-        return token;
-      },
-      async session({ session, token, user }) { 
-        session.user.id = token.userId; //(3)
-        return session;
-      },
+        async jwt({ token, account, user }) {
+            if (account && account.type === "credentials") {
+              token.userId = account.providerAccountId!;
+              if(user) {
+                //@ts-expect-error
+                token.role = user.role;
+              }
+            }
+            return token;
+          },
+          async session({ session, token }) {
+            session.user.id = token.userId;
+            session.user.role = token.role as string;
+            return session;
+          },
+          async signIn({account, user}) {
+            if (account && account.type === "credentials") {
+              return true;
+            }
+            return false;
+          },
     },
     pages: {
       signIn: '/login', //(4) custom signin page path
@@ -30,13 +42,17 @@ import {
           email: { label: "Email", type: "email", placeholder: "email@example.com" },
           password: { label: "Password", type: "password" }
         },
-        async authorize(credentials, req) {
+        async authorize(credentials) {
           if (!credentials) {
             return null;
           }
           const { email, password } = credentials;
   
-          return { id: "1", name: "John Doe", email: "john.doe@example.com" };
+          const user = await authenticateUser(email, password);
+          if (!user) {
+            return null;
+          }
+          return user;
         }
       })
     ],

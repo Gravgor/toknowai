@@ -18,15 +18,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from "@/lib/utils"
 
 const UserNavbar = () => {
- // const { data: session, status } = useSession()
- const session = {
-    user: {
-        name: "John Doe",
-        email: "john.doe@example.com",
-        image: "https://avatars.githubusercontent.com/u/12345678?v=4",
-    }
- }
-  const isLoading = false
+  const { data: session, status } = useSession()
+  const isLoading = status === "loading"
   const [isDarkMode, setIsDarkMode] = useState(false)
 
   const toggleDarkMode = () => {
